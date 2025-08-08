@@ -27,6 +27,7 @@ static inline Uint32 SwapLE32(Uint32 x) {
 #endif
 }
 
+int ParseLBX(char *lbxname);
 int DumpToFile(FILE *fpout, FILE *fpin, Uint32 offset, Sint32 len);
 
 /* 0 on true, -1 on false or error */
@@ -35,121 +36,125 @@ int IsRIFF(FILE *fp, Uint32 offset);
 
 int main(int argc, char *argv[])
 {
+  int n;
 
-  if(argc>1)
+  if(argc<=1)
   {
-    int n;
-    for(n=1; n<argc; n++)
+    fprintf(stderr,"Usage: lbxplode <file1.lbx> <file2.lbx> ...\n");
+    return(1);
+  }
+
+  for(n=1; n<argc; n++)
+    ParseLBX(argv[n]);
+
+  return(0);
+}
+
+int ParseLBX(char *lbxname)
+{
+  LBXheader header;
+  int m;
+  long lbxlen;
+  FILE *fp;
+  Uint32 *offset;
+
+  fp=fopen(lbxname,"rb");
+  if(fp==NULL)
+  {
+    fprintf(stderr,"Could not open %s\n",lbxname);
+    return(1);
+  }
+
+  fseek(fp,0,SEEK_END);
+  lbxlen=ftell(fp);
+  if(lbxlen<sizeof(header))
+  {
+    fprintf(stderr,"File %s is too small to be a valid LBX archive.\n",lbxname);
+    fclose(fp);
+    return(1);
+  }
+
+  fseek(fp,0,SEEK_SET);
+  if(fread(&header,1,sizeof(header),fp)==0)
+  {
+    fprintf(stderr,"No header in %s\n",lbxname);
+    fclose(fp);
+    return(1);
+  }
+
+  header.files=SwapLE16(header.files);
+  header.magic=SwapLE16(header.magic);
+
+  if(header.magic!=LBX_MAGIC)
+  {
+    fprintf(stderr,"File %s is not an LBX archive, skipping.\n",lbxname);
+    fclose(fp);
+    return(1);
+  }
+
+  printf("%s contains %u files\n",lbxname,header.files);
+
+  offset=(Uint32 *)malloc(sizeof(Uint32)*(header.files+1));
+  if(offset==NULL)
+  {
+    fprintf(stderr,"Could not allocate offsets buffer.\n");
+    fclose(fp);
+    return(1);
+  }
+
+  fread(offset,sizeof(Uint32),header.files+1,fp);
+
+  printf("Offsets: ");
+  for(m=0; m<=header.files; m++)
+  {
+    offset[m]=SwapLE32(offset[m]);
+    printf("0x%08x ",offset[m]);
+  }
+  printf("\n");
+
+  if(offset[header.files]!=lbxlen)
+    fprintf(stderr,"Invalid LBX archive: last offset does not match file length, continuing anyway. Some files may be corrupt.\n");
+
+  for(m=0; m<header.files; m++)
+  {
+    int len=offset[m+1]-offset[m];
+    char fname[256];
+    FILE *fpout;
+
+    if(len==0)
     {
-      LBXheader header;
-      int m;
-      long lbxlen;
-      FILE *fp=fopen(argv[n],"rb");
-      Uint32 *offset=NULL;
-
-      if(fp==NULL)
-      {
-        fprintf(stderr,"Could not open %s\n",argv[n]);
-        continue;
-      }
-
-      fseek(fp,0,SEEK_END);
-      lbxlen=ftell(fp);
-      if(lbxlen<sizeof(header))
-      {
-        fprintf(stderr,"File %s is too small to be a valid LBX archive.\n",argv[n]);
-        fclose(fp);
-        continue;
-      }
-
-      fseek(fp,0,SEEK_SET);
-      if(fread(&header,1,sizeof(header),fp)==0)
-      {
-        fprintf(stderr,"No header in %s\n",argv[n]);
-        fclose(fp);
-        continue;
-      }
-
-      header.files=SwapLE16(header.files);
-      header.magic=SwapLE16(header.magic);
-
-      if(header.magic!=LBX_MAGIC)
-      {
-        fprintf(stderr,"File %s is not an LBX archive, skipping.\n",argv[n]);
-        fclose(fp);
-        continue;
-      }
-
-      printf("%s contains %u files\n",argv[n],header.files);
-
-      offset=(Uint32 *)malloc(sizeof(Uint32)*(header.files+1));
-      if(offset==NULL)
-      {
-        fprintf(stderr,"Could not allocate offsets buffer.\n");
-        fclose(fp);
-        return(1);
-      }
-
-      fread(offset,sizeof(Uint32),header.files+1,fp);
-
-      printf("Offsets: ");
-      for(m=0; m<=header.files; m++)
-      {
-        offset[m]=SwapLE32(offset[m]);
-        printf("0x%08x ",offset[m]);
-      }
-      printf("\n");
-
-      if(offset[header.files]!=lbxlen)
-        fprintf(stderr,"Invalid LBX archive: last offset does not match file length, continuing anyway. Some files may be corrupt.\n");
-
-      for(m=0; m<header.files; m++)
-      {
-        int len=offset[m+1]-offset[m];
-        char fname[256];
-        FILE *fpout;
-
-        if(len==0)
-        {
-          printf("Skipping empty file %04u\n",m);
-          continue;
-        }
-        else if(len<0)
-        {
-          fprintf(stderr,"Encountered invalid file %04u length of %d.\n",m,len);
-          continue;
-        }
-
-        if(IsRIFF(fp,offset[m])>=0)
-          sprintf(fname,"%s_%04u.wav",argv[n],m);
-        else
-          sprintf(fname,"%s_%04u",argv[n],m);
-
-        fpout=fopen(fname,"w");
-        if(fpout==NULL)
-        {
-          fprintf(stderr,"Could not open output file %s for writing.\n",fname);
-          continue;
-        }
-
-        printf("Dumping %s\n",fname);
-        if(m+1<header.files)
-          DumpToFile(fpout,fp,offset[m],len);
-        else
-          DumpToFile(fpout,fp,offset[m],0);
-
-        fclose(fpout);
-      }
-
-      free(offset);
-      fclose(fp);
+      printf("Skipping empty file %04u\n",m);
+      continue;
     }
-  }
-  else
-  {
-    fprintf(stderr,"No files specified.\n");
+    else if(len<0)
+    {
+      fprintf(stderr,"Encountered invalid file %04u length of %d.\n",m,len);
+      continue;
+    }
+
+    if(IsRIFF(fp,offset[m])>=0)
+      sprintf(fname,"%s_%04u.wav",lbxname,m);
+    else
+      sprintf(fname,"%s_%04u",lbxname,m);
+
+    fpout=fopen(fname,"w");
+    if(fpout==NULL)
+    {
+      fprintf(stderr,"Could not open output file %s for writing.\n",fname);
+      continue;
+    }
+
+    printf("Dumping %s\n",fname);
+    if(m+1<header.files)
+      DumpToFile(fpout,fp,offset[m],len);
+    else
+      DumpToFile(fpout,fp,offset[m],0);
+
+    fclose(fpout);
   }
 
+  free(offset);
+  fclose(fp);
   return(0);
 }
 

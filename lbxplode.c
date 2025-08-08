@@ -75,9 +75,9 @@ int ParseLBX(char *lbxname)
   }
 
   fseek(fp,0,SEEK_SET);
-  if(fread(&header,1,sizeof(header),fp)==0)
+  if(fread(&header,sizeof(header),1,fp)==0)
   {
-    fprintf(stderr,"No header in %s\n",lbxname);
+    fprintf(stderr,"LBX archive header could not be read from %s\n",lbxname);
     fclose(fp);
     return(1);
   }

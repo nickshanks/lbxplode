@@ -92,7 +92,14 @@ int main(int argc, char *argv[])
       for(m=0; m<header.files; m++)
       {
         char fname[256];
-        FILE *fpout=NULL;
+        FILE *fpout;
+
+        if(offset[m+1]-offset[m]<=0)
+        {
+          printf("Skipping empty file %04d\n",m);
+          continue;
+        }
+
         if(IsRIFF(fp,offset[m])>=0)
           sprintf(fname,"%s_%04d.wav",argv[n],m);
         else

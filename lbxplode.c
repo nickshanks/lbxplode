@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
     for(n=1; n<argc; n++)
     {
       LBXheader header;
-      int m=0;
+      int m;
       FILE *fp=fopen(argv[n],"rb");
       Uint32 *offset=NULL;
 
@@ -79,10 +79,11 @@ int main(int argc, char *argv[])
         return(1);
       }
 
+      fread(offset,sizeof(Uint32),header.files+1,fp);
+
       printf("Offsets: ");
       for(m=0; m<=header.files; m++)
       {
-        fread(offset+m,1,sizeof(Uint32),fp);
         offset[m]=SwapLE32(offset[m]);
         printf("0x%08x ",offset[m]);
       }

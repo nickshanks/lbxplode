@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
       {
         fread(offset+m,1,sizeof(Uint32),fp);
         offset[m]=SwapLE32(offset[m]);
-        printf("0x%08x ",m,offset[m]);
+        printf("0x%08x ",offset[m]);
       }
       printf("\n");
 

@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
         continue;
       }
 
-      printf("%s contains %d files\n",argv[n],header.files);
+      printf("%s contains %u files\n",argv[n],header.files);
 
       offset=(Uint32 *)malloc(sizeof(Uint32)*header.files);
       if(offset==NULL)

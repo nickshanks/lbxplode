@@ -19,7 +19,7 @@ typedef struct LBXheader
   Uint16 files;
   Uint16 magic;
   Uint16 unknown1;
-  Uint16 version;  /* Version number */
+  Uint16 unknown2;
 } LBXheader;
 
 #endif/*__LBX_H__*/

@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
 
       header.files=SwapLE16(header.files);
       header.magic=SwapLE16(header.magic);
-      header.version=SwapLE16(header.version);
 
       if(header.magic!=LBX_MAGIC)
       {

@@ -17,7 +17,8 @@
 typedef struct LBXheader
 {
   Uint16 files;
-  Uint8  magic[4]; /* Magic 4 bytes  */
+  Uint16 magic;
+  Uint16 unknown1;
   Uint16 version;  /* Version number */
 } LBXheader;
 

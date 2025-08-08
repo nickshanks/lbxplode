@@ -5,7 +5,7 @@
 
 // http://www.xprt.net/~s8/prog/orion2/lbx/
 
-const Uint8  LBXmagic[]={0xad,0xfe,0x00,0x00};
+const Uint16 LBX_MAGIC = 65197;
 const Uint8 RIFFmagic[]={'R','I','F','F'};
 
 char writebuf[0x10000];
@@ -60,9 +60,10 @@ int main(int argc, char *argv[])
       }
 
       header.files=SwapLE16(header.files);
+      header.magic=SwapLE16(header.magic);
       header.version=SwapLE16(header.version);
-      
-      if(memcmp(header.magic,LBXmagic,4)!=0)
+
+      if(header.magic!=LBX_MAGIC)
       {
         fprintf(stderr,"Not an LBX archive!\n");
         fclose(fp);

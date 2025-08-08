@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
       printf("%s contains %u files\n",argv[n],header.files);
 
-      offset=(Uint32 *)malloc(sizeof(Uint32)*header.files);
+      offset=(Uint32 *)malloc(sizeof(Uint32)*(header.files+1));
       if(offset==NULL)
       {
         fprintf(stderr,"Couldn't allocate offset\n");
@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
       }
 
       printf("Offsets: ");
-      for(m=0; m<header.files; m++)
+      for(m=0; m<=header.files; m++)
       {
         fread(offset+m,1,sizeof(Uint32),fp);
         offset[m]=SwapLE32(offset[m]);

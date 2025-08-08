@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_endian.h>
+#include <stdlib.h>
+#include <string.h>
 #include "lbx.h"
 
 // http://www.xprt.net/~s8/prog/orion2/lbx/
@@ -9,6 +9,23 @@ const Uint8  LBXmagic[]={0xad,0xfe,0x00,0x00};
 const Uint8 RIFFmagic[]={'R','I','F','F'};
 
 char writebuf[0x10000];
+
+static inline Uint16 SwapLE16(Uint16 x) {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  return x;
+#else
+  return (x >> 8) | (x << 8);
+#endif
+}
+
+static inline Uint32 SwapLE32(Uint32 x) {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+  return x;
+#else
+  return (x >> 24) | ((x & 0x00FF0000) >> 8) |
+    ((x & 0x0000FF00) << 8) | (x << 24);
+#endif
+}
 
 int DumpToFile(FILE *fpout, FILE *fpin, Uint32 offset, Sint32 len);
 
@@ -42,8 +59,8 @@ int main(int argc, char *argv[])
         continue;
       }
 
-      header.files=SDL_SwapLE16(header.files);
-      header.version=SDL_SwapLE16(header.version);
+      header.files=SwapLE16(header.files);
+      header.version=SwapLE16(header.version);
       
       if(memcmp(header.magic,LBXmagic,4)!=0)
       {
@@ -66,7 +83,7 @@ int main(int argc, char *argv[])
       for(m=0; m<header.files; m++)
       {
         fread(offset+m,1,sizeof(Uint32),fp);
-        offset[m]=SDL_SwapLE32(offset[m]);
+        offset[m]=SwapLE32(offset[m]);
         printf("0x%08x ",m,offset[m]);
       }
       printf("\n");

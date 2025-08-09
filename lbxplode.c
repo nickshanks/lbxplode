@@ -28,6 +28,7 @@ static inline Uint32 SwapLE32(Uint32 x) {
 }
 
 int ParseLBX(char *lbxname);
+int ExtractFile(FILE *fp, Uint32 *offset, int m, char *lbxname, LBXheader header);
 int DumpToFile(FILE *fpout, FILE *fpin, Uint32 offset, Sint32 len);
 
 /* 0 on true, -1 on false or error */
@@ -116,45 +117,49 @@ int ParseLBX(char *lbxname)
     fprintf(stderr,"Invalid LBX archive: last offset does not match file length, continuing anyway. Some files may be corrupt.\n");
 
   for(m=0; m<header.files; m++)
-  {
-    int len=offset[m+1]-offset[m];
-    char fname[256];
-    FILE *fpout;
-
-    if(len==0)
-    {
-      printf("Skipping empty file %04u\n",m);
-      continue;
-    }
-    else if(len<0)
-    {
-      fprintf(stderr,"Encountered invalid file %04u length of %d.\n",m,len);
-      continue;
-    }
-
-    if(IsRIFF(fp,offset[m])>=0)
-      sprintf(fname,"%s_%04u.wav",lbxname,m);
-    else
-      sprintf(fname,"%s_%04u",lbxname,m);
-
-    fpout=fopen(fname,"w");
-    if(fpout==NULL)
-    {
-      fprintf(stderr,"Could not open output file %s for writing.\n",fname);
-      continue;
-    }
-
-    printf("Dumping %s\n",fname);
-    if(m+1<header.files)
-      DumpToFile(fpout,fp,offset[m],len);
-    else
-      DumpToFile(fpout,fp,offset[m],0);
-
-    fclose(fpout);
-  }
+    ExtractFile(fp,offset,m,lbxname,header);
 
   free(offset);
   fclose(fp);
+  return(0);
+}
+
+int ExtractFile(FILE *fp, Uint32 *offset, int m, char *lbxname, LBXheader header)
+{
+  int len=offset[m+1]-offset[m];
+  char fname[256];
+  FILE *fpout;
+
+  if(len==0)
+  {
+    printf("Skipping empty file %04u\n",m);
+    return(1);
+  }
+  else if(len<0)
+  {
+    fprintf(stderr,"Encountered invalid file %04u length of %d.\n",m,len);
+    return(1);
+  }
+
+  if(IsRIFF(fp,offset[m])>=0)
+    sprintf(fname,"%s_%04u.wav",lbxname,m);
+  else
+    sprintf(fname,"%s_%04u",lbxname,m);
+
+  fpout=fopen(fname,"w");
+  if(fpout==NULL)
+  {
+    fprintf(stderr,"Could not open output file %s for writing.\n",fname);
+    return(1);
+  }
+
+  printf("Dumping %s\n",fname);
+  if(m+1<header.files)
+    DumpToFile(fpout,fp,offset[m],len);
+  else
+    DumpToFile(fpout,fp,offset[m],0);
+
+  fclose(fpout);
   return(0);
 }
 

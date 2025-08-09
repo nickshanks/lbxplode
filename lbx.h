@@ -14,6 +14,13 @@
   #define Sint32 signed int
 #endif
 
+#ifndef MIN
+  #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef MAX
+  #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
 typedef struct LBXheader
 {
   Uint16 files;

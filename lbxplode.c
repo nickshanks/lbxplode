@@ -182,7 +182,7 @@ int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int f
   {
     while(len>0)
     {
-      int size=fread(writebuf,1,len>0xffff?0xffff:len,fp);
+      int size=fread(writebuf,1,MIN(len,0xffff),fp);
       fwrite(writebuf,1,size,fpout);
       len-=size;
     }

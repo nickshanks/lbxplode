@@ -28,8 +28,7 @@ static inline Uint32 SwapLE32(Uint32 x) {
 }
 
 int ParseLBX(char *lbxname);
-int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int nonfinal);
-int DumpToFile(FILE *fpout, FILE *fpin, Uint32 offset, Sint32 len);
+int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int final);
 
 /* 0 on true, -1 on false or error */
 int IsRIFF(FILE *fp, Uint32 offset);
@@ -117,14 +116,14 @@ int ParseLBX(char *lbxname)
     fprintf(stderr,"Invalid LBX archive: last offset does not match file length, continuing anyway. Some files may be corrupt.\n");
 
   for(m=0; m<header.files; m++)
-    ExtractFile(fp,offset[m],offset[m+1]-offset[m],m,lbxname,m+1<header.files);
+    ExtractFile(fp,offset[m],offset[m+1]-offset[m],m,lbxname,m==header.files-1);
 
   free(offset);
   fclose(fp);
   return(0);
 }
 
-int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int nonfinal)
+int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int final)
 {
   char fname[256];
   FILE *fpout;
@@ -152,42 +151,32 @@ int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int n
     return(1);
   }
 
-  printf("Dumping %s\n",fname);
-  DumpToFile(fpout,fp,offset,nonfinal?len:0);
-
-  fclose(fpout);
-  return(0);
-}
-
-int DumpToFile(FILE *fpout, FILE *fpin, Uint32 offset, Sint32 len)
-{
-  if(fseek(fpin,offset,SEEK_SET)<0)
+  printf("Writing %s\n",fname);
+  if(fseek(fp,offset,SEEK_SET)!=0)
   {
+    fprintf(stderr,"Could not seek to offset %u in input file.\n",offset);
     return(-1);
   }
 
-  if(len==0) /* Keep going 'till end of file */
+  if(final) /* Keep going 'till end of file */
   {
-    while(!feof(fpin))
+    while(!feof(fp))
     {
-      int len=fread(writebuf,1,0xffff,fpin);
-      fwrite(writebuf,1,len,fpout);
+      int size=fread(writebuf,1,0xffff,fp);
+      fwrite(writebuf,1,size,fpout);
     }
   }
   else
   {
     while(len>0)
     {
-      int max;
-      if(len>0xffff) max=0xffff;
-      else           max=len;
-
-      max=fread(writebuf,1,max,fpin);
-      fwrite(writebuf,1,max,fpout);
-      len-=max;
+      int size=fread(writebuf,1,len>0xffff?0xffff:len,fp);
+      fwrite(writebuf,1,size,fpout);
+      len-=size;
     }
   }
 
+  fclose(fpout);
   return(0);
 }
 

@@ -28,7 +28,7 @@ static inline Uint32 SwapLE32(Uint32 x) {
 }
 
 int ParseLBX(char *lbxname);
-int ExtractFile(FILE *fp, Uint32 *offset, int m, char *lbxname, LBXheader header);
+int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int nonfinal);
 int DumpToFile(FILE *fpout, FILE *fpin, Uint32 offset, Sint32 len);
 
 /* 0 on true, -1 on false or error */
@@ -117,16 +117,15 @@ int ParseLBX(char *lbxname)
     fprintf(stderr,"Invalid LBX archive: last offset does not match file length, continuing anyway. Some files may be corrupt.\n");
 
   for(m=0; m<header.files; m++)
-    ExtractFile(fp,offset,m,lbxname,header);
+    ExtractFile(fp,offset[m],offset[m+1]-offset[m],m,lbxname,m+1<header.files);
 
   free(offset);
   fclose(fp);
   return(0);
 }
 
-int ExtractFile(FILE *fp, Uint32 *offset, int m, char *lbxname, LBXheader header)
+int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int nonfinal)
 {
-  int len=offset[m+1]-offset[m];
   char fname[256];
   FILE *fpout;
 
@@ -141,7 +140,7 @@ int ExtractFile(FILE *fp, Uint32 *offset, int m, char *lbxname, LBXheader header
     return(1);
   }
 
-  if(IsRIFF(fp,offset[m])>=0)
+  if(IsRIFF(fp,offset)>=0)
     sprintf(fname,"%s_%04u.wav",lbxname,m);
   else
     sprintf(fname,"%s_%04u",lbxname,m);
@@ -154,10 +153,10 @@ int ExtractFile(FILE *fp, Uint32 *offset, int m, char *lbxname, LBXheader header
   }
 
   printf("Dumping %s\n",fname);
-  if(m+1<header.files)
-    DumpToFile(fpout,fp,offset[m],len);
+  if(nonfinal)
+    DumpToFile(fpout,fp,offset,len);
   else
-    DumpToFile(fpout,fp,offset[m],0);
+    DumpToFile(fpout,fp,offset,0);
 
   fclose(fpout);
   return(0);

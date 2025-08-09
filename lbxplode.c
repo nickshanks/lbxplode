@@ -13,7 +13,15 @@ const Uint8 WAVEfmt[]={'W','A','V','E','f','m','t'};
 
 char writebuf[0x10000];
 
-static inline Uint16 SwapLE16(Uint16 x) {
+#ifndef __inline
+  #define __inline
+#endif
+
+#ifndef __inline__
+  #define __inline__ __inline
+#endif
+
+static __inline__ Uint16 SwapLE16(Uint16 x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   return x;
 #else
@@ -21,7 +29,7 @@ static inline Uint16 SwapLE16(Uint16 x) {
 #endif
 }
 
-static inline Uint32 SwapLE32(Uint32 x) {
+static __inline__ Uint32 SwapLE32(Uint32 x) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
   return x;
 #else

@@ -27,6 +27,6 @@ typedef struct LBXheader
   Uint16 magic;
   Uint16 unknown1;
   Uint16 unknown2;
-} LBXheader;
+} __attribute__((packed)) LBXheader;
 
 #endif/*__LBX_H__*/

@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 
   if(argc<=1)
   {
-    fprintf(stderr,"Usage: lbxplode <file1.lbx> <file2.lbx> ...\n");
+    fprintf(stderr,"Usage: %s <file1.lbx> <file2.lbx> ...\n", argv[0]);
     return(1);
   }
 

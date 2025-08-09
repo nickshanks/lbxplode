@@ -9,6 +9,7 @@
 
 const Uint16 LBX_MAGIC = 65197;
 const Uint8 RIFFmagic[]={'R','I','F','F'};
+const Uint8 WAVEfmt[]={'W','A','V','E','f','m','t'};
 
 char writebuf[0x10000];
 
@@ -33,7 +34,7 @@ int ParseLBX(char *lbxname);
 int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int final);
 
 /* 0 on true, -1 on false or error */
-int IsRIFF(FILE *fp, Uint32 offset);
+int IsWAVE(FILE *fp, Uint32 offset);
 
 
 int main(int argc, char *argv[])
@@ -151,7 +152,7 @@ int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int f
     return(1);
   }
 
-  if(IsRIFF(fp,offset)>=0)
+  if(IsWAVE(fp,offset)==0)
     sprintf(fname,"%s_%04u.wav",lbxname,m);
   else
     sprintf(fname,"%s_%04u",lbxname,m);
@@ -163,7 +164,7 @@ int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int f
     return(1);
   }
 
-  printf("Writing %s\n",fname);
+  printf("Writing %s of %u bytes\n",fname,len);
   if(fseek(fp,offset,SEEK_SET)!=0)
   {
     fprintf(stderr,"Could not seek to offset %u in input file.\n",offset);
@@ -192,17 +193,17 @@ int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int f
   return(0);
 }
 
-int IsRIFF(FILE *fp, Uint32 offset)
+int IsWAVE(FILE *fp, Uint32 offset)
 {
   Uint8 magic[15];
-  Uint8 WAVEfmt[7]={'W','A','V','E','f','m','t'};
 
-  if(fseek(fp,offset,SEEK_SET)<0) return(-1);
-
-  fread(magic,1,15,fp);
-
-  if((memcmp(magic,RIFFmagic,4)==0)&&(memcmp(magic+8,WAVEfmt,7)==0))
-    return(0);
-  else
+  if(fseek(fp,offset,SEEK_SET)!=0)
     return(-1);
+
+  fread(magic,1,sizeof(magic),fp);
+
+  if((memcmp(magic,RIFFmagic,4)!=0)||(memcmp(magic+8,WAVEfmt,7)!=0))
+    return(-1);
+
+  return(0);
 }

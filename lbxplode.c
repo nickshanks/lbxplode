@@ -5,6 +5,8 @@
 
 // http://www.xprt.net/~s8/prog/orion2/lbx/
 
+#define DEBUG 0
+
 const Uint16 LBX_MAGIC = 65197;
 const Uint8 RIFFmagic[]={'R','I','F','F'};
 
@@ -104,13 +106,16 @@ int ParseLBX(char *lbxname)
 
   fread(offset,sizeof(Uint32),header.files+1,fp);
 
-  printf("Offsets: ");
+  if(DEBUG)
+    printf("Offsets: ");
   for(m=0; m<=header.files; m++)
   {
     offset[m]=SwapLE32(offset[m]);
-    printf("0x%08x ",offset[m]);
+    if(DEBUG)
+      printf("0x%08x ",offset[m]);
   }
-  printf("\n");
+  if(DEBUG)
+    printf("\n");
 
   if(offset[header.files]!=lbxlen)
     fprintf(stderr,"Invalid LBX archive: last offset does not match file length, continuing anyway. Some files may be corrupt.\n");

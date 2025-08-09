@@ -153,10 +153,7 @@ int ExtractFile(FILE *fp, Uint32 offset, Sint32 len, int m, char *lbxname, int n
   }
 
   printf("Dumping %s\n",fname);
-  if(nonfinal)
-    DumpToFile(fpout,fp,offset,len);
-  else
-    DumpToFile(fpout,fp,offset,0);
+  DumpToFile(fpout,fp,offset,nonfinal?len:0);
 
   fclose(fpout);
   return(0);

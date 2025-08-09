@@ -60,6 +60,13 @@ int ParseLBX(char *lbxname)
   FILE *fp;
   Uint32 *offset;
 
+  /* suffix "_0000.ext" will be added, and name buffer is 256 bytes long */
+  if(strlen(lbxname)>246)
+  {
+    fprintf(stderr,"Filename %s is too long, skipping.\n",lbxname);
+    return(1);
+  }
+
   fp=fopen(lbxname,"rb");
   if(fp==NULL)
   {

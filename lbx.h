@@ -13,6 +13,9 @@
 #ifndef Sint32
   #define Sint32 signed int
 #endif
+#ifndef Uint64
+  #define Uint64 unsigned long long int
+#endif
 
 #ifndef MIN
   #define MIN(a, b) ((a) < (b) ? (a) : (b))
